@@ -1,0 +1,15 @@
+{
+    "name": "pounard/stockicon",
+    "description": "Icon set/Stock icons handling API",
+    "authors": [
+        {
+            "name": "Pierre Rineau",
+            "email": "pierre.rineau-php@processus.org",
+            "homepage": "http://blog.processus.org",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "StockIcon": "src/" }
+    }
+}
