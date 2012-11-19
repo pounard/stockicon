@@ -65,7 +65,10 @@ class ToolkitHelper
 
         $dimensions = explode('x', $size);
 
-        if (!is_int($dimensions[0]) || !is_int($dimensions[0]) || count($dimensions) !== 2) {
+        if (!is_numeric($dimensions[0]) ||
+            !is_numeric($dimensions[0]) ||
+            count($dimensions) !== 2)
+        {
             throw new \InvalidArgumentException(
                 sprintf("Invalid size given '%s'", $size));
         }

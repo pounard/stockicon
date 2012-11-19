@@ -17,4 +17,11 @@ interface IconThemeAware
      * @return \StockIcon\IconTheme Icon theme
      */
     public function getIconTheme();
+
+    /**
+     * Get theme name
+     *
+     * @return string Theme name
+     */
+    public function getThemeName();
 }

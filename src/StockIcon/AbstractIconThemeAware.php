@@ -30,4 +30,13 @@ class AbstractIconThemeAware implements IconThemeAware
 
         return $this->iconTheme;
     }
+
+    /**
+     * (non-PHPdoc)
+     * @see \StockIcon\IconThemeAware::getThemeName()
+     */
+    final public function getThemeName()
+    {
+        return $this->getIconTheme()->getThemeName();
+    }
 }
