@@ -5,7 +5,7 @@ namespace StockIcon;
 /**
  * Look up icons by name and size
  */
-interface IconTheme
+interface IconTheme extends IconRendererAware
 {
     /**
      * Get theme name
@@ -35,6 +35,20 @@ interface IconTheme
      * @return \StockIcon\IconInfo  Icon info instance
      */
     public function getIconInfo($iconName, $size);
+
+    /**
+     * Get real and public image internal or external URI
+     *
+     * This method is error safe, it won't throw exceptions and return a
+     * straight null in case of any error
+     *
+     * @param string $iconName Icon name
+     * @param string $size     Icon size
+     *
+     * @return string          Icon displayable URI in HTML, or null if no
+     *                         icon could be find
+     */
+    public function renderIcon($iconName, $size);
 
     /**
      * List icon contextes

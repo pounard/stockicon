@@ -37,6 +37,39 @@ Basic sample usage of a single theme.
         // Either theme or icon does not exists in the specified size
     }
 
+And now an icon rendering example. Rendering happens thanks to the
+_\StockIcon\IconRenderer_ object.
+
+    use StockIcon\IconInfo;
+    use StockIcon\Impl\DesktopIconTheme;
+    use StockIcon\Impl\LocalIconRenderer;
+
+    // Same comment as in the previous example
+    $themePath = '/usr/share/icons/oxygen';
+
+    try {
+        $theme = new DesktopIconTheme($themePath);
+
+        $theme->setIconRenderer(
+            // Local icon renderer needs webroot path to determine if URI
+            // returned by icon info instances are public or not
+            '/path/to/webroot',
+            // It also needs a writable folder for generated or scaled icons
+            '/path/to/webroot/public/icons');
+
+        // You need to display a particular image?
+        if ($path = $theme->render('video-display', IconInfo::ICON_SIZE_64)) {
+            return '<img src="' . $path . '"/>';
+        } else {
+            // File not found
+            return '';
+        }
+    } catch (\InvalidArgumentException $e) {
+        // Something bad happened when instanciating the theme, but the render
+        // function is error silent so this would not be raised while trying
+        // to render an icon
+    }
+
 Factory usage
 -------------
 

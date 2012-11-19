@@ -70,6 +70,7 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
             }
 
             // HOW? @todo find native file system path
+            // This is important: this will cause problems with Drupal
         }
 
         if (0 === strpos($uri, $this->publicRoot)) {

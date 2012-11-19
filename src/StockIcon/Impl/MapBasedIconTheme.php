@@ -2,7 +2,6 @@
 
 namespace StockIcon\Impl;
 
-use StockIcon\DefaultIconInfo;
 use StockIcon\IconInfo;
 use StockIcon\IconTheme;
 
@@ -10,7 +9,7 @@ use StockIcon\IconTheme;
  * Static map based icon theme, ideally you should always use this
  * implementation along with a caching layer whatever is your icon source
  */
-class MapBasedIconTheme implements IconTheme
+class MapBasedIconTheme extends AbstractIconRendererAware implements IconTheme
 {
     /**
      * @var string
@@ -92,6 +91,19 @@ class MapBasedIconTheme implements IconTheme
         }
 
         return new DefaultIconInfo($iconName, $size, $uri, $this);
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \StockIcon\IconTheme::renderIcon()
+     */
+    public function renderIcon($iconName, $size)
+    {
+        return $this
+            ->getIconRenderer()
+            ->render(
+                $this->getIconInfo($iconName, $size),
+                $size);
     }
 
     /**

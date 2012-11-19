@@ -1,6 +1,9 @@
 <?php
 
-namespace StockIcon;
+namespace StockIcon\Impl;
+
+use StockIcon\IconInfo;
+use StockIcon\IconTheme;
 
 /**
  * Default icon info implementation suitable for most needs

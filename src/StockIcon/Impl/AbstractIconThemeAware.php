@@ -1,6 +1,9 @@
 <?php
 
-namespace StockIcon;
+namespace StockIcon\Impl;
+
+use StockIcon\IconTheme;
+use StockIcon\IconThemeAware;
 
 class AbstractIconThemeAware implements IconThemeAware
 {
