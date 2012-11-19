@@ -42,9 +42,9 @@ class MapBasedIconTheme implements IconTheme
      *
      * @return array
      */
-    final public function dumpMap()
+    public function dumpMap()
     {
-        return $this->imageMap;
+       return $this->imageMap;
     }
 
     /**

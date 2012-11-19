@@ -3,6 +3,7 @@
 namespace StockIcon\Toolkit;
 
 use StockIcon\Toolkit\Impl\ImagickToolkit;
+use StockIcon\Toolkit\Impl\RsvgConvertToolkit;
 
 /**
  * Static size handling helper
@@ -26,6 +27,8 @@ class ToolkitHelper
             if (class_exists('Imagick')) {
                 // Most obvious and easy choice
                 self::$toolkit = new ImagickToolkit();
+            } else if (shell_exec("which rsvg-convert")) {
+                self::$toolkit = new RsvgConvertToolkit();
             }
 
             if (null === self::$toolkit) {

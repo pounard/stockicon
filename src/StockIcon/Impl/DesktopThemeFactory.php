@@ -41,11 +41,15 @@ class DesktopThemeFactory extends MapBasedThemeFactory
     {
         $iterator = new \DirectoryIterator($path);
 
-        foreach ($iterator as $localPath => $file) {
+        foreach ($iterator as $file) {
             if ($file->isDir() && !$file->isDot()) {
-                /* if ($index = $path->seek('index.theme')) { */
-                    $this->themeMap[$file->getBasename()] = new DesktopIconTheme($file->getPath());
-                /* } */
+
+                $filePath  = $file->getPath() . DIRECTORY_SEPARATOR . $file->getBasename();
+                $indexPath = $filePath . DIRECTORY_SEPARATOR . 'index.theme';
+
+                if (file_exists($indexPath)) {
+                    $this->themeMap[$file->getBasename()] = new DesktopIconTheme($filePath);
+                }
             }
         }
     }

@@ -14,7 +14,7 @@ class DesktopThemeFactoryTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         // @todo CONFIGURABRU!!!
-        $this->path = '/tmp/gnome-icon-theme-symbolic';
+        $this->path = '/usr/share/icons';
 
         if (!is_dir($this->path)) {
             $this->markTestSkipped("Please set up the gnome-icon-theme-symbolic path for testing.");

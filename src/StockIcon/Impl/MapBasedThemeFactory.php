@@ -29,10 +29,20 @@ class MapBasedThemeFactory implements ThemeFactory
     }
 
     /**
+     * For caching purposes, you might need to dump the image map
+     *
+     * @return array
+     */
+    final public function dumpMap()
+    {
+        return $this->imageMap;
+    }
+
+    /**
      * (non-PHPdoc)
      * @see \StockIcon\ThemeFactory::getAllThemeNames()
      */
-    public function getAllThemeNames()
+    final public function getAllThemeNames()
     {
         return array_keys($this->themeMap);
     }
@@ -41,7 +51,7 @@ class MapBasedThemeFactory implements ThemeFactory
      * (non-PHPdoc)
      * @see \StockIcon\ThemeFactory::hasTheme()
      */
-    public function hasTheme($themeName)
+    final public function hasTheme($themeName)
     {
         return isset($this->themeMap[$themeName]);
     }
