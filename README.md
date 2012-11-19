@@ -7,10 +7,41 @@ easily.
 Getting started
 ===============
 
-Sample (almost complete) usage
-------------------------------
+Basic usage
+-----------
 
-This example demonstrate the normal runtime flow.
+Basic sample usage of a single theme.
+
+    use StockIcon\IconInfo;
+    use StockIcon\Impl\DesktopIconTheme;
+
+    // Assuming you're working on a *NIX box with some icons themes
+    // already being there: this for sample purposes, but in real life
+    // you're advised to download manually the icon themes you'd want
+    // to use on your site somewhere else
+    // Let's say you are using KDE, and want the oxygen icons theme
+    $themePath = '/usr/share/icons/oxygen';
+
+    try {
+        $theme = new DesktopIconTheme($themePath);
+
+        // From now on, you can fetch any icon information: for example,
+        // the video-display icon is under the 'devices' context
+        $iconInfo = $theme->getIconInfo(
+            'video-display', IconInfo::ICON_SIZE_64);
+
+        // From this point, you can get its URI
+        $uri = $iconInfo->getURI();
+
+    } catch (\InvalidArgumentException $e) {
+        // Either theme or icon does not exists in the specified size
+    }
+
+Factory usage
+-------------
+
+This example demonstrate a more advanced yet normal runtime flow in an
+environment where you'd handle more than one theme.
 
     use StockIcon\IconInfo;
     use StockIcon\Impl\DesktopThemeFactory;
