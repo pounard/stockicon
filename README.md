@@ -4,6 +4,9 @@ Stock icon
 Icon set/Stock icons handling API for reusing common UNIX Desktop icons themes
 easily.
 
+Getting started
+===============
+
 Sample (almost complete) usage
 ------------------------------
 
@@ -50,3 +53,35 @@ This example demonstrate the normal runtime flow.
     } catch (\InvalidArgumentException $e) {
         // Either theme or icon does not exists in the specified size
     }
+
+File scanning and performance
+=============================
+
+Default implementations will scan the file system each time you will
+instanciate either the factory or a theme: nobody would ever want to do that
+under normal circumstances on a live site. In order to prevent this to happen
+it is advised to write a discovery script, then write the found file map in
+plain PHP in order to be able to use the _map based_ implementations.
+
+For example, consider the following code:
+
+    use StockIcon\Impl\DesktopThemeFactory;
+    use StockIcon\Impl\MapBasedThemeFactory;
+
+    // Try to reach a theme from some cache entry
+    $themeMap = apc_fetch('known_themes');
+
+    if ($themeMap) {
+        $factory = new MapBasedThemeFactory($themeMap);
+    } else {
+        // We have no cache entry, instanciate the fallback
+        $factory = new DesktopThemeFactory('/some/path');
+        apc_store('known_themes', $factory->dumpMap());
+    }
+
+This is rudimentary code, but in the future some helpers using the proxy
+pattern may rise.
+
+The ideal situation would also make you use the same approach for the theme
+themselves. @todo
+
