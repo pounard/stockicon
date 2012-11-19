@@ -5,15 +5,14 @@ namespace StockIcon\Impl;
 use StockIcon\IconInfo;
 
 /**
- * File system implementation able to search throught multiple paths for icon
- * themes
+ * Icon theme implementation that will be able to use *NIX desktop themes
  *
  * This implementation will work over classical desktop icon themes and their
  * directory structure
  *
  * Path can be either in or outside of the webroot (relative or absolute)
  */
-class FileSystemIconTheme extends MapBasedIconTheme
+class DesktopIconTheme extends MapBasedIconTheme
 {
     /**
      * Base path

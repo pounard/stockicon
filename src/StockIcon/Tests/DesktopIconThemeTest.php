@@ -3,10 +3,11 @@
 namespace StockIcon\Tests;
 
 use StockIcon\IconInfo;
-use StockIcon\Impl\FileSystemIconTheme;
+use StockIcon\IconTheme;
+use StockIcon\Impl\DesktopIconTheme;
 use StockIcon\Impl\MapBasedIconTheme;
 
-class FileSystemIconThemeTest extends \PHPUnit_Framework_TestCase
+class DesktopIconThemeTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var string
@@ -27,12 +28,12 @@ class FileSystemIconThemeTest extends \PHPUnit_Framework_TestCase
 
     public function testNameMap()
     {
-        $theme = new FileSystemIconTheme($this->path);
+        $theme = new DesktopIconTheme($this->path);
 
         // Tests that the name is computed from the path when not provided
         $this->assertEquals('gnome', $theme->getThemeName());
 
-        $theme = new FileSystemIconTheme($this->path, 'symbolic');
+        $theme = new DesktopIconTheme($this->path, 'symbolic');
 
         // Tests that the name is the one given if given
         $this->assertEquals('symbolic', $theme->getThemeName());
@@ -40,7 +41,7 @@ class FileSystemIconThemeTest extends \PHPUnit_Framework_TestCase
 
     public function testCreateMap()
     {
-        $theme = new FileSystemIconTheme($this->path, 'symbolic');
+        $theme = new DesktopIconTheme($this->path, 'symbolic');
 
         $map = $theme->dumpMap();
 
@@ -68,9 +69,11 @@ class FileSystemIconThemeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('apps', $map['system-users'][1]);
     }
 
-    public function testGetIconInfo()
+    public function testGetIconInfo(IconTheme $theme = null)
     {
-        $theme = new FileSystemIconTheme($this->path, 'symbolic');
+        if (null === $theme) {
+            $theme = new DesktopIconTheme($this->path, 'symbolic');
+        }
 
         // Ensure get works
         $iconInfo = $theme->getIconInfo('text-x-generic', IconInfo::SCALABLE);
@@ -85,10 +88,10 @@ class FileSystemIconThemeTest extends \PHPUnit_Framework_TestCase
 
     public function testRestoreDump()
     {
-        $theme = new FileSystemIconTheme($this->path, 'symbolic');
+        $theme = new DesktopIconTheme($this->path, 'symbolic');
         $map   = $theme->dumpMap();
         $theme = new MapBasedIconTheme('symbolic', $map); 
 
-        $this->testGetIconInfo();
+        $this->testGetIconInfo($theme);
     }
 }
