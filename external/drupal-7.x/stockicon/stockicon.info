@@ -1,0 +1,5 @@
+name = "Stock icon"
+description = "Icon set/Stock icons handling API for reusing common UNIX Desktop icons themes easily."
+core = 7.x
+package = Utility
+php = 5.3

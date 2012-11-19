@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * @file
+ * Stock icon module.
+ */
+
+/**
+ * Define a custom autoloader if non declared, this prerequisite that the
+ * library lives under the same folder hierarchy than the composer package.
+ */
+if (!class_exists('StockIcon\IconTheme')) {
+  // In case no custom autoloader is provided, use the composer one.
+  // In order to use it, you need to run "composer install" in the
+  // APubSub folder root.
+  $autoloadFile = __DIR__ . '/../../../vendor/autoload.php';
+  if (file_exists($autoloadFile)) {
+    require $autoloadFile;
+  }
+}
+
+/**
+ * Get icon theme
+ *
+ * @param string $target
+ *   Business API for which to get the configured theme.
+ *
+ * @return \StockIcon\IconTheme
+ *   Icon theme.
+ */
+function stockicon_theme_get($target = 'default') {
+  
+}
