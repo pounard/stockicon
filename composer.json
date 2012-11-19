@@ -1,6 +1,6 @@
 {
     "name": "pounard/stockicon",
-    "description": "Icon set/Stock icons handling API",
+    "description": "Icon set/Stock icons handling API for reusing common UNIX Desktop icons themes easily",
     "authors": [
         {
             "name": "Pierre Rineau",
