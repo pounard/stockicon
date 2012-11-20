@@ -27,8 +27,8 @@ class ToolkitHelper
             if (class_exists('Imagick')) {
                 // Most obvious and easy choice
                 self::$toolkit = new ImagickToolkit();
-            } else if (shell_exec("which rsvg-convert")) {
-                self::$toolkit = new RsvgConvertToolkit();
+            } else if ($output = shell_exec("which rsvg-convert")) {
+                self::$toolkit = new RsvgConvertToolkit($output);
             }
 
             if (null === self::$toolkit) {

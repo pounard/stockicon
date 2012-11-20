@@ -10,22 +10,42 @@ interface IconInfo extends IconThemeAware
     /**
      * Icon size is scalable
      */
-    const SCALABLE = 'scalable';
+    const SCALABLE      = 'scalable';
 
     /**
      * Icon size is 16x16
      */
-    const ICON_SIZE_16 = '16x16';
+    const ICON_SIZE_16  = '16x16';
 
     /**
      * Icon size is 32x32
      */
-    const ICON_SIZE_32 = '32x32';
+    const ICON_SIZE_24  = '24x24';
+
+    /**
+     * Icon size is 32x32
+     */
+    const ICON_SIZE_32  = '32x32';
+
+    /**
+     * Icon size is 32x32
+     */
+    const ICON_SIZE_48  = '48x48';
+
+    /**
+     * Icon size is 32x32
+     */
+    const ICON_SIZE_56  = '56x56';
 
     /**
      * Icon size is 64x64
      */
-    const ICON_SIZE_64 = '64x64';
+    const ICON_SIZE_64  = '64x64';
+
+    /**
+     * Icon size is 64x64
+     */
+    const ICON_SIZE_128 = '128x128';
 
     /**
      * Get icon name

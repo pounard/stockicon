@@ -5,6 +5,30 @@
  * Stock icon module.
  */
 
+use StockIcon\Impl\DesktopThemeFactory;
+use StockIcon\Impl\LocalIconRenderer;
+use StockIcon\Impl\NullIconTheme;
+
+/**
+ * Default folder where icons are stored variable name.
+ */
+const STOCKICON_THEME_PATH_VAR = 'stockicon_theme_path';
+
+/**
+ * Default folder where icons are stored variable name.
+ */
+const STOCKICON_THEME_PATH_DEFAULT = 'public://stockicon';
+
+/**
+ * Default folder where generated icons are stored variable name.
+ */
+const STOCKICON_PUBLIC_PATH_VAR = 'stockicon_public_path';
+
+/**
+ * Default folder where generated icons are stored variable name.
+ */
+const STOCKICON_PUBLIC_PATH_DEFAULT = 'public://icons-custom';
+
 /**
  * Define a custom autoloader if non declared, this prerequisite that the
  * library lives under the same folder hierarchy than the composer package.
@@ -19,15 +43,176 @@ if (!class_exists('StockIcon\IconTheme')) {
   }
 }
 
+// Provide a custom autoloader for our custom classes.
+spl_autoload_register(function ($className) {
+  if (false !== strpos($className, '\\')) {
+    $parts = explode('\\', $className);
+    if ('DrupalStockIcon' === $parts[0]) {
+      $filename = __DIR__ . '/lib/' . implode('/', $parts) . '.php';
+      if (file_exists($filename)) {
+        return (bool)require_once $filename;
+      }
+    }
+  }
+  return false;
+});
+
+/**
+ * Implements hook_menu().
+ */
+function stockicon_menu() {
+  $items = array();
+
+  // Consumer list.
+  $items['admin/appearance/stockicon'] = array(
+    'title' => "Stock icons",
+    'page callback' => 'stockicon_admin_appearance',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'stockicon.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  // Theme list.
+  $items['admin/appearance/stockicon-theme'] = array(
+    'title' => "Stock icons themes",
+    'page callback' => 'stockicon_admin_appearance_theme',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'stockicon.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/appearance/stockicon-theme/%stockicon_theme'] = array(
+    'title' => "Themes",
+    'page callback' => 'stockicon_admin_appearance_theme_preview',
+    'page arguments' => array(3),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'stockicon.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Get default factory for themes.
+ *
+ * @return \StockIcon\ThemeFactory
+ *   Theme factory.
+ */
+function stockicon_theme_factory_get() {
+
+  $instance = &drupal_static(__FUNCTION__);
+
+  if (null === $instance) {
+
+    $theme_path = variable_get(
+      STOCKICON_THEME_PATH_VAR,
+      STOCKICON_THEME_PATH_DEFAULT);
+
+    $public_path = variable_get(
+      STOCKICON_PUBLIC_PATH_VAR,
+      STOCKICON_PUBLIC_PATH_DEFAULT);
+
+    if (!file_prepare_directory($theme_path, FILE_CREATE_DIRECTORY)) {
+      // @todo Do something!!!
+    }
+    if (!file_prepare_directory($public_path, FILE_CREATE_DIRECTORY)) {
+      // @todo Do something!!!
+    }
+
+    // Determine local and public stream wrappers from what we can
+    $public_schemes = array();
+    foreach (file_get_stream_wrappers() as $scheme => $info) {
+      if ($info['type'] & STREAM_WRAPPERS_VISIBLE) {
+        $public_schemes[] = $scheme;
+      }
+    }
+
+    $rendered = new LocalIconRenderer(
+        DRUPAL_ROOT, $public_path, null, $public_schemes);
+
+    $instance = new DesktopThemeFactory(array($theme_path));
+    $instance->setIconRenderer($rendered);
+  }
+
+  return $instance;
+}
+
+/**
+ * Get theme consumers list.
+ *
+ * @return array
+ *   Array of string names.
+ */
+function stockicon_consumer_list() {
+
+  $list = &drupal_static(__FUNCTION__);
+
+  if (null === $list) {
+    $list = module_invoke_all('stockicon_consumer');
+    $list[] = 'default';
+  }
+
+  return $list;
+}
+
+/**
+ * Menu helper.
+ */
+function stockicon_theme_load($theme_name) {
+
+  if (null === $theme_name) {
+    return false;
+  }
+
+  $factory = stockicon_theme_factory_get();
+
+  if ($factory->hasTheme($theme_name)) {
+    return $factory->getTheme($theme_name);
+  } else {
+    return false;
+  }
+}
+
 /**
  * Get icon theme
  *
- * @param string $target
- *   Business API for which to get the configured theme.
+ * @param string $theme_name
+ *   Theme name.
+ *
+ * @return \StockIcon\IconTheme
+ */
+function stockicon_theme_get($theme_name) {
+
+  if (null === $theme_name) {
+    return new NullIconTheme();
+  }
+
+  $factory = stockicon_theme_factory_get();
+
+  if ($factory->hasTheme($theme_name)) {
+    return $factory->getTheme($theme_name);
+  } else {
+    return new NullIconTheme();
+  }
+}
+
+/**
+ * Get icon theme for given consumer
+ *
+ * @param string $consumer
+ *   Consumer name (business API identifier, e.g. "user-notifications").
  *
  * @return \StockIcon\IconTheme
  *   Icon theme.
  */
-function stockicon_theme_get($target = 'default') {
-  
+function stockicon_get($consumer = 'default') {
+
+  $conf = variable_get('stockicon_consumer', array());
+
+  if (isset($conf[$consumer])) {
+    $theme_name = $conf[$consumer];
+  } else {
+    $theme_name = null;
+  }
+
+  return stockicon_theme_get($theme_name);
 }

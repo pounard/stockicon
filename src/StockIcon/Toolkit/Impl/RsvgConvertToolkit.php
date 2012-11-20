@@ -11,6 +11,25 @@ use StockIcon\Toolkit\ToolkitInterface;
 class RsvgConvertToolkit implements ToolkitInterface
 {
     /**
+     * @var string
+     */
+    private $rsvgBin;
+
+    /**
+     * Default constructor
+     *
+     * @param string $rsvgBin RSVG convert tool binary
+     */
+    public function __construct($rsvgBin = null)
+    {
+        if (null === $rsvgBin) {
+            $this->rsvgBin = shell_exec("which rsvg-convert");
+        } else {
+            $this->rsvgBin = $rsvgBin;
+        }
+    }
+
+    /**
      * (non-PHPdoc)
      * @see \StockIcon\Toolkit\ToolkitInterface::svgToPng()
      */
@@ -24,7 +43,8 @@ class RsvgConvertToolkit implements ToolkitInterface
             }
         }
 
-        $command = sprintf("rsvg-convert %s -w %s -h %d > %s",
+        $command = sprintf("%s %s -w %s -h %d > %s",
+            escapeshellcmd($this->rsvgBin),
             escapeshellarg($sourceFile),
             $x, $y,
             escapeshellarg($destFile));

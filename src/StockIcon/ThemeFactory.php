@@ -5,7 +5,7 @@ namespace StockIcon;
 /**
  * Theme factory allows you to find themes in the current context
  */
-interface ThemeFactory
+interface ThemeFactory extends IconRendererAware
 {
     /**
      * List all known theme names

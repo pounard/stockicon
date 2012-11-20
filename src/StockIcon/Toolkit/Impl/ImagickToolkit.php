@@ -24,10 +24,10 @@ class ImagickToolkit implements ToolkitInterface
             }
         }
 
-        $image = new Imagick();
+        $image = new \Imagick();
         $image->readImageBlob(file_get_contents($sourceFile));
         $image->setImageFormat("png24");
-        $image->resizeImage($x, $y, Imagick::FILTER_LANCZOS, 1);
+        $image->resizeImage($x, $y, \Imagick::FILTER_LANCZOS, 1);
         $image->writeImage($destFile);
 
         return $destFile;

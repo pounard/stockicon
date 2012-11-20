@@ -26,6 +26,14 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
     private $publicRoot;
 
     /**
+     * @var array
+     */
+    private $publicSchemes = array(
+        'http' => true,
+        'file' => true,
+    );
+
+    /**
      * Default constructor
      *
      * @param string $publicRoot        Path of current webroot, considered as
@@ -34,11 +42,16 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
      * @param string $publicDir         Public dir where to store generated or
      *                                  copied icons
      * @param ToolkitInterface $toolkit Image toolkit if different from default
+     * @param array $publicSchemes      List of stream wrapper schemes known to
+     *                                  give only files accessible publicly
+     *                                  from HTTP (remote or local doesn't
+     *                                  matter)
      */
     public function __construct(
         $publicRoot,
         $publicDir = null,
-        ToolkitInterface $toolkit = null)
+        ToolkitInterface $toolkit = null,
+        array $publicSchemes = null)
     {
         $this->setPublicRoot($publicRoot);
 
@@ -47,6 +60,30 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
         }
         if (null !== $publicDir) {
             $this->setPublicDir($publicDir);
+        }
+        if (null !== $publicSchemes) {
+            $this->publicSchemes += array_flip($publicSchemes);
+        }
+    }
+
+    /**
+     * Tell if given URI is publicly readable from HTTP
+     *
+     * @param string $uri File URI
+     *
+     * @return boolean    True if ressource is public
+     */
+    public function isPublic($uri)
+    {
+        if (false !== strpos($uri, '://')) {
+
+            list($scheme) = explode('://', $uri, 2);
+
+            if (isset($this->publicSchemes[$scheme])) {
+                return true;
+            }
+        } else {
+            return 0 === strpos($uri, $this->publicRoot);
         }
     }
 
@@ -60,21 +97,20 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
      */
     public function getRelativePath($uri)
     {
-        // Handle PHP streams
+        // Drop PHP stream URI
         if (false !== strpos($uri, '://')) {
 
-            list($scheme, $target) = explode('://', $uri, 2);
+            list($scheme, $uri) = explode('://', $uri, 2);
 
-            if (!stream_is_local($uri)) {
+            // 'file://' scheme is a special case since it points to a local
+            // known file using the VFS style: we can treat this exception
+            // safely in most cases
+            if ('file' !== $scheme) {
                 return null;
             }
-
-            // HOW? @todo find native file system path
-            // This is important: this will cause problems with Drupal
         }
 
         if (0 === strpos($uri, $this->publicRoot)) {
-            // File is public
             return substr($uri, strlen($this->publicRoot));
         } else {
             return null;
@@ -145,14 +181,20 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
 
             $uri = $source->getURI();
 
-            if ($relativePath = $this->getRelativePath($uri)) {
-                return $relativePath;
+            if ($this->isPublic($uri)) {
+                if ($relativePath = $this->getRelativePath($uri)) {
+                    return $relativePath;
+                } else {
+                    // The caller gave us a scheme'd URI we cannot guess where
+                    // the file really is, it is the business layer
+                    // responsability to be able to create the real URL
+                    return $uri;
+                }
             } else {
                 if (!$destFile = $this->getDestFilename($source, $size)) {
                     // Could not create the destination dir
                     return null;
                 }
-
                 if (!copy($uri, $destFile)) {
                     // Could not copy file
                     return null;
@@ -172,7 +214,13 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
                 return null;
             }
 
-            return $this->getToolkit()->svgToPng($source->getURI(), $size, $destFile);
+            try {
+                return $this->getToolkit()->svgToPng($source->getURI(), $size, $destFile);
+            } catch (\Exception $e) {
+                // Sorry, toolkit may have it wrong, case in which we surely
+                // don't want to leave the exception pass
+                return null;
+            }
         }
     }
 }

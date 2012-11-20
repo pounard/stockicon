@@ -48,7 +48,10 @@ class DesktopThemeFactory extends MapBasedThemeFactory
                 $indexPath = $filePath . DIRECTORY_SEPARATOR . 'index.theme';
 
                 if (file_exists($indexPath)) {
-                    $this->themeMap[$file->getBasename()] = new DesktopIconTheme($filePath);
+                    $this->themeMap[$file->getBasename()] = array(
+                        '\StockIcon\Impl\DesktopIconTheme',
+                        array($filePath),
+                    );
                 }
             }
         }

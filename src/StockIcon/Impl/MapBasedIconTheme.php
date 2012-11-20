@@ -99,11 +99,15 @@ class MapBasedIconTheme extends AbstractIconRendererAware implements IconTheme
      */
     public function renderIcon($iconName, $size)
     {
-        return $this
-            ->getIconRenderer()
-            ->render(
-                $this->getIconInfo($iconName, $size),
-                $size);
+        try {
+            $iconInfo = $this->getIconInfo($iconName, $size);
+        } catch (\InvalidArgumentException $e) {
+            // This will happen only when icon has no scalable variant and does
+            // not exists in the asked size
+            return null; 
+        }
+
+        return $this->getIconRenderer()->render($iconInfo, $size);
     }
 
     /**
@@ -129,7 +133,20 @@ class MapBasedIconTheme extends AbstractIconRendererAware implements IconTheme
      */
     public function getIconList($context = null)
     {
-        return array_keys($this->imageMap);
+        if (null !== $context) {
+            $ret = array();
+
+            foreach ($this->imageMap as $iconName => $data) {
+                if ($context === $data[1]) {
+                    $ret[] = $iconName;
+                }
+            }
+
+            return $ret;
+
+        } else {
+            return array_keys($this->imageMap);
+        }
     }
 
     /**
@@ -143,6 +160,6 @@ class MapBasedIconTheme extends AbstractIconRendererAware implements IconTheme
                 "Icon '%s' does not exists", $iconName));
         }
 
-        return $this->imageMap[$iconName][0];
+        return array_keys($this->imageMap[$iconName][0]);
     }
 }
