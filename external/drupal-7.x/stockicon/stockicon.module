@@ -8,6 +8,10 @@
 use StockIcon\Impl\DesktopThemeFactory;
 use StockIcon\Impl\LocalIconRenderer;
 use StockIcon\Impl\NullIconTheme;
+use StockIcon\IconRenderer;
+use StockIcon\Impl\ReadonlyIconRenderer;
+
+use DrupalStockIcon\DrupalIconRenderer;
 
 /**
  * Default folder where icons are stored variable name.
@@ -63,6 +67,27 @@ spl_autoload_register(function ($className) {
 function stockicon_menu() {
   $items = array();
 
+  // We need to discover if the current path where to put generated images is
+  // local or not. Ideally, someone could configure a remote CDN instead of
+  // generating images locally, case in which we'd leave the default renderer
+  // and would not add this callback.
+  $renderer = stockicon_renderer_get();
+  if ($renderer instanceof DrupalIconRenderer) {
+    if ($path = $renderer->getMenuRouterPath()) {
+      $i = count(explode('/', $path)); 
+      $items[$path] = array(
+        'page callback' => 'stockicon_renderer_deliver',
+        'page arguments' => array(
+              $i, // Theme name
+            ++$i, // Size
+            ++$i, // Image name and extension
+        ),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+      );
+    }
+  }
+
   // Consumer list.
   $items['admin/appearance/stockicon'] = array(
     'title' => "Stock icons",
@@ -92,6 +117,69 @@ function stockicon_menu() {
 }
 
 /**
+ * Get local writable public stream schemes available.
+ *
+ * @return array
+ *   List of stream schemes, can be empty.
+ */
+function _stockicon_stream_get_local_schemes() {
+  // Determine local and public stream wrappers from what we can
+  $public_schemes = array();
+  foreach (file_get_stream_wrappers() as $scheme => $info) {
+    if ($info['type'] & STREAM_WRAPPERS_VISIBLE) {
+      $public_schemes[] = $scheme;
+    }
+  }
+  return $public_schemes;
+}
+
+/**
+ * Get renderer
+ *
+ * @return \StockIcon\IconRenderer
+ */
+function stockicon_renderer_get() {
+
+  $renderer = &drupal_static(__FUNCTION__);
+
+  if (null !== $renderer) {
+    return $renderer;
+  }
+
+  $public_path = variable_get(STOCKICON_PUBLIC_PATH_VAR, STOCKICON_PUBLIC_PATH_DEFAULT);
+  $schemes     = _stockicon_stream_get_local_schemes();
+  $toolkit     = null;
+
+  // Ensure the scheme is local, if it is, it must be public else we cannot
+  // render any images, we would switch to a default readonly instance. If
+  // the URI is not public, we may keep the default implementation hopping
+  // that the toolkit will correctly use the remote stream.
+  if (strpos($public_path, '://')) {
+    list($scheme, $uri) = explode('://', $public_path);
+
+    if (in_array($scheme, $schemes)) {
+      // @todo Use local icon renderer.
+      $renderer = new LocalIconRenderer(DRUPAL_ROOT, $public_path, $toolkit, $schemes);
+    } else {
+      // Default icon renderer toolkit should be able to render remote schemes
+      // without needing us to store anything, let's give a shot at it: this
+      // allows site admins to use CDN for which they integrated a PHP stream
+      // wrapper natively and transparently
+      $renderer = new LocalIconRenderer(DRUPAL_ROOT, $public_path, $toolkit, $schemes);
+    }
+  } else {
+    if (file_prepare_directory($public_path, FILE_CREATE_DIRECTORY)) {
+      // @todo Use custom instance
+      $renderer = new LocalIconRenderer(DRUPAL_ROOT, $public_path, $toolkit, $schemes);
+    } else {
+      $renderer = new ReadonlyIconRenderer(DRUPAL_ROOT, $schemes);
+    }
+  }
+
+  return $renderer;
+}
+
+/**
  * Get default factory for themes.
  *
  * @return \StockIcon\ThemeFactory
@@ -103,34 +191,16 @@ function stockicon_theme_factory_get() {
 
   if (null === $instance) {
 
-    $theme_path = variable_get(
-      STOCKICON_THEME_PATH_VAR,
-      STOCKICON_THEME_PATH_DEFAULT);
-
-    $public_path = variable_get(
-      STOCKICON_PUBLIC_PATH_VAR,
-      STOCKICON_PUBLIC_PATH_DEFAULT);
+    $theme_path = variable_get(STOCKICON_THEME_PATH_VAR, STOCKICON_THEME_PATH_DEFAULT);
 
     if (!file_prepare_directory($theme_path, FILE_CREATE_DIRECTORY)) {
       // @todo Do something!!!
     }
-    if (!file_prepare_directory($public_path, FILE_CREATE_DIRECTORY)) {
-      // @todo Do something!!!
-    }
 
-    // Determine local and public stream wrappers from what we can
-    $public_schemes = array();
-    foreach (file_get_stream_wrappers() as $scheme => $info) {
-      if ($info['type'] & STREAM_WRAPPERS_VISIBLE) {
-        $public_schemes[] = $scheme;
-      }
-    }
-
-    $rendered = new LocalIconRenderer(
-        DRUPAL_ROOT, $public_path, null, $public_schemes);
+    $renderer = stockicon_renderer_get();
 
     $instance = new DesktopThemeFactory(array($theme_path));
-    $instance->setIconRenderer($rendered);
+    $instance->setIconRenderer($renderer);
   }
 
   return $instance;
