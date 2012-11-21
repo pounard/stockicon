@@ -13,25 +13,12 @@ use StockIcon\Toolkit\ToolkitInterface;
  * Render local icons by copying them if non public or resizing them from the
  * scalable version if non existing at the given size
  */
-class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
+class LocalIconRenderer extends ReadonlyIconRenderer
 {
     /**
      * @var string
      */
     private $publicDir;
-
-    /**
-     * @var string
-     */
-    private $publicRoot;
-
-    /**
-     * @var array
-     */
-    private $publicSchemes = array(
-        'http' => true,
-        'file' => true,
-    );
 
     /**
      * Default constructor
@@ -53,7 +40,7 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
         ToolkitInterface $toolkit = null,
         array $publicSchemes = null)
     {
-        $this->setPublicRoot($publicRoot);
+        parent::__construct($publicRoot, $publicSchemes);
 
         if (null !== $toolkit) {
             $this->setToolkit($toolkit);
@@ -61,78 +48,14 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
         if (null !== $publicDir) {
             $this->setPublicDir($publicDir);
         }
-        if (null !== $publicSchemes) {
-            $this->publicSchemes += array_flip($publicSchemes);
-        }
-    }
-
-    /**
-     * Tell if given URI is publicly readable from HTTP
-     *
-     * @param string $uri File URI
-     *
-     * @return boolean    True if ressource is public
-     */
-    public function isPublic($uri)
-    {
-        if (false !== strpos($uri, '://')) {
-
-            list($scheme) = explode('://', $uri, 2);
-
-            if (isset($this->publicSchemes[$scheme])) {
-                return true;
-            }
-        } else {
-            return 0 === strpos($uri, $this->publicRoot);
-        }
-    }
-
-    /**
-     * Get relative path from the webroot to this given file URI
-     *
-     * @param string $uri File URI
-     *
-     * @return string     File relative path if the file is inside the webroot
-     *                    null otherwise
-     */
-    public function getRelativePath($uri)
-    {
-        // Drop PHP stream URI
-        if (false !== strpos($uri, '://')) {
-
-            list($scheme, $uri) = explode('://', $uri, 2);
-
-            // 'file://' scheme is a special case since it points to a local
-            // known file using the VFS style: we can treat this exception
-            // safely in most cases
-            if ('file' !== $scheme) {
-                return null;
-            }
-        }
-
-        if (0 === strpos($uri, $this->publicRoot)) {
-            return substr($uri, strlen($this->publicRoot));
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Set public root directory
-     *
-     * @param string $publicRoot Public root directory
-     */
-    public function setPublicRoot($publicRoot)
-    {
-        $this->publicRoot = $publicRoot;
     }
 
     /**
      * Set public working directory where generated icons will be stored
      *
-     * @param string $publicDir Public dir
+     * @param string $publicDir Public working directory
      */
-    public function setPublicDir($publicDir)
+    final public function setPublicDir($publicDir)
     {
         if (!is_writable($publicDir)) {
             throw new \InvalidArgumentException(sprintf(
@@ -140,6 +63,16 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
         }
 
         $this->publicDir = $publicDir;
+    }
+
+    /**
+     * Get public working directory where generated icons will be stored
+     *
+     * @param string Public working directory
+     */
+    final public function getPublicDir()
+    {
+        return $this->getPublicDir();
     }
 
     /**
@@ -156,7 +89,6 @@ class LocalIconRenderer extends AbstractToolkitAware implements IconRenderer
         if (!is_dir($destDir)) {
             if (!mkdir($destDir, 0755, true)) {
                 // Destination directory cannot be created
-                // FIXME: Logging
                 return null;
             }
         }
