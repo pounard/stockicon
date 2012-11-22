@@ -89,7 +89,7 @@ function stockicon_admin_appearance_theme_preview(IconTheme $theme) {
         'title' => sprintf('%s/%s - %s', $context, $icon_name, $size),
       );
 
-      if ($uri = $theme->renderIcon($icon_name, $sizes[0])) {
+      if ($uri = $theme->renderIcon($icon_name, $size)) {
         list($x, $y) = ToolkitHelper::getDimensionsFromSize($size);
         $attributes['src'] = file_create_url($uri);
         $attributes['width'] = $x;

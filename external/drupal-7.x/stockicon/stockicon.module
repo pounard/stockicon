@@ -10,6 +10,7 @@ use StockIcon\Impl\LocalIconRenderer;
 use StockIcon\Impl\NullIconTheme;
 use StockIcon\IconRenderer;
 use StockIcon\Impl\ReadonlyIconRenderer;
+use StockIcon\Toolkit\ToolkitHelper;
 
 use DrupalStockIcon\DrupalIconRenderer;
 
@@ -31,7 +32,7 @@ const STOCKICON_PUBLIC_PATH_VAR = 'stockicon_public_path';
 /**
  * Default folder where generated icons are stored variable name.
  */
-const STOCKICON_PUBLIC_PATH_DEFAULT = 'public://icons-custom';
+const STOCKICON_PUBLIC_PATH_DEFAULT = 'public://styles/icons-custom';
 
 /**
  * Define a custom autoloader if non declared, this prerequisite that the
@@ -158,8 +159,7 @@ function stockicon_renderer_get() {
     list($scheme, $uri) = explode('://', $public_path);
 
     if (in_array($scheme, $schemes)) {
-      // @todo Use local icon renderer.
-      $renderer = new LocalIconRenderer(DRUPAL_ROOT, $public_path, $toolkit, $schemes);
+      $renderer = new DrupalIconRenderer(DRUPAL_ROOT, $public_path, $schemes);
     } else {
       // Default icon renderer toolkit should be able to render remote schemes
       // without needing us to store anything, let's give a shot at it: this
@@ -285,4 +285,79 @@ function stockicon_get($consumer = 'default') {
   }
 
   return stockicon_theme_get($theme_name);
+}
+/*
+function file_transfer($uri, $headers) {
+  if (ob_get_level()) {
+    ob_end_clean();
+  }
+
+  foreach ($headers as $name => $value) {
+    drupal_add_http_header($name, $value);
+  }
+  drupal_send_headers();
+  $scheme = file_uri_scheme($uri);
+  // Transfer file in 1024 byte chunks to save memory usage.
+  if ($scheme && file_stream_wrapper_valid_scheme($scheme) && $fd = fopen($uri, 'rb')) {
+    while (!feof($fd)) {
+      print fread($fd, 1024);
+    }
+    fclose($fd);
+  }
+  else {
+    drupal_not_found();
+  }
+  drupal_exit();
+}
+ */
+
+/**
+ * Deliver renderered image icon.
+ */
+function stockicon_renderer_deliver($theme_name, $size, $image_name) {
+
+  if (!strpos($image_name, '.')) {
+    return MENU_NOT_FOUND;
+  }
+
+  $destFile = request_path();
+  $destDir  = dirname($destFile);
+
+  if (!file_prepare_directory($destDir, FILE_CREATE_DIRECTORY)) {
+    // @todo Should be a 50X erro
+    return MENU_NOT_FOUND;
+  }
+
+  list($icon_name, $extension) = explode('.', $image_name);
+
+  $theme = stockicon_theme_get($theme_name);
+
+  try {
+    $icon_info = $theme->getIconInfo($icon_name, $size);
+    $toolkit   = ToolkitHelper::getToolkit();
+
+    $toolkit->svgToPng($icon_info->getURI(), $size, $destFile);
+
+    // OK, everyting seemed to happen good, now stream the image.
+    header('Content-Type: image/png');
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($destFile));
+
+    $previous = null;
+    while (($level = ob_get_level()) > 0 && $level !== $previous) {
+      $previous = $level;
+      ob_end_flush();
+    }
+    flush();
+    readfile($destFile);
+
+    drupal_exit();
+
+  } catch (Exception $e) {
+    // Don't care about what happened, can't allow potential DDoS to happen.
+    return MENU_NOT_FOUND;
+  }
 }
