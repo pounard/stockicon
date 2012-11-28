@@ -36,7 +36,7 @@ class MapBasedThemeFactory extends AbstractIconRendererAware implements
      */
     final public function dumpMap()
     {
-        return $this->imageMap;
+        return $this->themeMap;
     }
 
     /**

@@ -5,7 +5,6 @@
  * Stock icon module.
  */
 
-use StockIcon\Impl\DesktopThemeFactory;
 use StockIcon\Impl\LocalIconRenderer;
 use StockIcon\Impl\NullIconTheme;
 use StockIcon\IconRenderer;
@@ -13,21 +12,22 @@ use StockIcon\Impl\ReadonlyIconRenderer;
 use StockIcon\Toolkit\ToolkitHelper;
 
 use DrupalStockIcon\DrupalIconRenderer;
+use DrupalStockIcon\CachedThemeFactory;
 
 /**
  * Default folder where icons are stored variable name.
  */
-const STOCKICON_THEME_PATH_VAR = 'stockicon_theme_path';
+const STOCKICON_THEME_PATH_VAR      = 'stockicon_theme_path';
 
 /**
  * Default folder where icons are stored variable name.
  */
-const STOCKICON_THEME_PATH_DEFAULT = 'public://stockicon';
+const STOCKICON_THEME_PATH_DEFAULT  = 'public://stockicon';
 
 /**
  * Default folder where generated icons are stored variable name.
  */
-const STOCKICON_PUBLIC_PATH_VAR = 'stockicon_public_path';
+const STOCKICON_PUBLIC_PATH_VAR     = 'stockicon_public_path';
 
 /**
  * Default folder where generated icons are stored variable name.
@@ -73,45 +73,43 @@ function stockicon_menu() {
   // generating images locally, case in which we'd leave the default renderer
   // and would not add this callback.
   $renderer = stockicon_renderer_get();
-  if ($renderer instanceof DrupalIconRenderer) {
-    if ($path = $renderer->getMenuRouterPath()) {
-      $i = count(explode('/', $path)); 
-      $items[$path] = array(
-        'page callback' => 'stockicon_renderer_deliver',
-        'page arguments' => array(
-              $i, // Theme name
-            ++$i, // Size
-            ++$i, // Image name and extension
-        ),
-        'access callback' => TRUE,
-        'type' => MENU_CALLBACK,
-      );
-    }
+  if ($renderer instanceof DrupalIconRenderer && ($path = $renderer->getMenuRouterPath())) {
+    $i = count(explode('/', $path)); 
+    $items[$path] = array(
+      'page callback'   => 'stockicon_renderer_deliver',
+      'page arguments'  => array(
+            $i, // Theme name
+          ++$i, // Size
+          ++$i, // Image name and extension
+      ),
+      'access callback' => TRUE,
+      'type'            => MENU_CALLBACK,
+    );
   }
 
   // Consumer list.
   $items['admin/appearance/stockicon'] = array(
-    'title' => "Stock icons",
-    'page callback' => 'stockicon_admin_appearance',
+    'title'            => "Stock icons",
+    'page callback'    => 'stockicon_admin_appearance',
     'access arguments' => array('administer site configuration'),
-    'file' => 'stockicon.admin.inc',
-    'type' => MENU_LOCAL_TASK,
+    'file'             => 'stockicon.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
   );
   // Theme list.
   $items['admin/appearance/stockicon-theme'] = array(
-    'title' => "Stock icons themes",
-    'page callback' => 'stockicon_admin_appearance_theme',
+    'title'            => "Stock icons themes",
+    'page callback'    => 'stockicon_admin_appearance_theme',
     'access arguments' => array('administer site configuration'),
-    'file' => 'stockicon.admin.inc',
-    'type' => MENU_LOCAL_TASK,
+    'file'             => 'stockicon.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
   );
   $items['admin/appearance/stockicon-theme/%stockicon_theme'] = array(
-    'title' => "Themes",
-    'page callback' => 'stockicon_admin_appearance_theme_preview',
-    'page arguments' => array(3),
+    'title'            => "Themes",
+    'page callback'    => 'stockicon_admin_appearance_theme_preview',
+    'page arguments'   => array(3),
     'access arguments' => array('administer site configuration'),
-    'file' => 'stockicon.admin.inc',
-    'type' => MENU_NORMAL_ITEM,
+    'file'             => 'stockicon.admin.inc',
+    'type'             => MENU_NORMAL_ITEM,
   );
 
   return $items;
@@ -124,7 +122,7 @@ function stockicon_menu() {
  *   List of stream schemes, can be empty.
  */
 function _stockicon_stream_get_local_schemes() {
-  // Determine local and public stream wrappers from what we can
+  // Determine local and public stream wrappers from what we can.
   $public_schemes = array();
   foreach (file_get_stream_wrappers() as $scheme => $info) {
     if ($info['type'] & STREAM_WRAPPERS_VISIBLE) {
@@ -169,8 +167,7 @@ function stockicon_renderer_get() {
     }
   } else {
     if (file_prepare_directory($public_path, FILE_CREATE_DIRECTORY)) {
-      // @todo Use custom instance
-      $renderer = new LocalIconRenderer(DRUPAL_ROOT, $public_path, $toolkit, $schemes);
+      $renderer = new DrupalIconRenderer(DRUPAL_ROOT, $public_path, $schemes);
     } else {
       $renderer = new ReadonlyIconRenderer(DRUPAL_ROOT, $schemes);
     }
@@ -199,7 +196,7 @@ function stockicon_theme_factory_get() {
 
     $renderer = stockicon_renderer_get();
 
-    $instance = new DesktopThemeFactory(array($theme_path));
+    $instance = new CachedThemeFactory('\StockIcon\Impl\DesktopThemeFactory', array(array($theme_path)));
     $instance->setIconRenderer($renderer);
   }
 
@@ -218,7 +215,10 @@ function stockicon_consumer_list() {
 
   if (null === $list) {
     $list = module_invoke_all('stockicon_consumer');
-    $list[] = 'default';
+
+    if (!in_array('default', $list)) {
+      $list[] = 'default';
+    }
   }
 
   return $list;
@@ -286,30 +286,6 @@ function stockicon_get($consumer = 'default') {
 
   return stockicon_theme_get($theme_name);
 }
-/*
-function file_transfer($uri, $headers) {
-  if (ob_get_level()) {
-    ob_end_clean();
-  }
-
-  foreach ($headers as $name => $value) {
-    drupal_add_http_header($name, $value);
-  }
-  drupal_send_headers();
-  $scheme = file_uri_scheme($uri);
-  // Transfer file in 1024 byte chunks to save memory usage.
-  if ($scheme && file_stream_wrapper_valid_scheme($scheme) && $fd = fopen($uri, 'rb')) {
-    while (!feof($fd)) {
-      print fread($fd, 1024);
-    }
-    fclose($fd);
-  }
-  else {
-    drupal_not_found();
-  }
-  drupal_exit();
-}
- */
 
 /**
  * Deliver renderered image icon.
@@ -352,6 +328,8 @@ function stockicon_renderer_deliver($theme_name, $size, $image_name) {
       ob_end_flush();
     }
     flush();
+
+    // Trust PHP internals: not Drupal ones.
     readfile($destFile);
 
     drupal_exit();

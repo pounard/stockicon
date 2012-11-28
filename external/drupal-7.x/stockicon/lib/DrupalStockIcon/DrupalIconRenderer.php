@@ -32,7 +32,7 @@ class DrupalIconRenderer extends ReadonlyIconRenderer
     }
 
     /**
-     * Get folder where to save generated files
+     * Get folder where generated files will be saved
      *
      * @return string Folder where to save generated files
      */
