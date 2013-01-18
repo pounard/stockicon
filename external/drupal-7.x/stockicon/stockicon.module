@@ -90,7 +90,8 @@ function stockicon_menu() {
   // Consumer list.
   $items['admin/appearance/stockicon'] = array(
     'title'            => "Stock icons",
-    'page callback'    => 'stockicon_admin_appearance',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('stockicon_admin_appearance'),
     'access arguments' => array('administer site configuration'),
     'file'             => 'stockicon.admin.inc',
     'type'             => MENU_LOCAL_TASK,
@@ -110,6 +111,18 @@ function stockicon_menu() {
     'access arguments' => array('administer site configuration'),
     'file'             => 'stockicon.admin.inc',
     'type'             => MENU_NORMAL_ITEM,
+  );
+  $items['admin/appearance/stockicon-theme/%stockicon_theme/grid'] = array(
+    'title'            => "Grid",
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/appearance/stockicon-theme/%stockicon_theme/table'] = array(
+    'title'            => "Table",
+    'page callback'    => 'stockicon_admin_appearance_theme_preview_table',
+    'page arguments'   => array(3),
+    'access arguments' => array('administer site configuration'),
+    'file'             => 'stockicon.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
   );
 
   return $items;
@@ -266,6 +279,23 @@ function stockicon_theme_get($theme_name) {
 }
 
 /**
+ * Render a stock icon
+ *
+ * @param string $icon_name
+ *   Icon name.
+ * @param string $size
+ *   Icon size (eg. "32x32").
+ * @param string $consumer
+ *   Consumer.
+ *
+ * @return string
+ *   Icon URI or null if not found.
+ */
+function stockicon_uri($icon_name, $size, $consumer = 'default') {
+  
+}
+
+/**
  * Get icon theme for given consumer
  *
  * @param string $consumer
@@ -280,7 +310,7 @@ function stockicon_get($consumer = 'default') {
 
   if (isset($conf[$consumer])) {
     $theme_name = $conf[$consumer];
-  } else {
+  } else if (!$theme_name = variable_get('stockicon_default_theme')) {
     $theme_name = null;
   }
 
@@ -332,7 +362,7 @@ function stockicon_renderer_deliver($theme_name, $size, $image_name) {
     // Trust PHP internals: not Drupal ones.
     readfile($destFile);
 
-    drupal_exit();
+    drupal_page_footer();
 
   } catch (Exception $e) {
     // Don't care about what happened, can't allow potential DDoS to happen.

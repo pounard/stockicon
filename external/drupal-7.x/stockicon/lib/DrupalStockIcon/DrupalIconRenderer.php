@@ -80,7 +80,8 @@ class DrupalIconRenderer extends ReadonlyIconRenderer
 
         // We can copy the image from where it comes from or we can scale
         // the image from whatever it comes from if it is scalable
-        if ($source->getBaseSize() === $size || IconInfo::SCALABLE === $source->getBaseSize())
+        if ($source->getBaseSize() === $size ||
+            IconInfo::SCALABLE === $source->getBaseSize())
         {
             return implode('/', array(
                 $this->publicDir,

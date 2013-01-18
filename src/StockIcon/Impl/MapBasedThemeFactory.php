@@ -111,4 +111,17 @@ class MapBasedThemeFactory extends AbstractIconRendererAware implements
 
         return $theme;
     }
+
+    /**
+     * (non-PHPdoc)
+     * @see \StockIcon\ThemeFactory::renderIcon()
+     */
+    final public function renderIcon($iconName, $size)
+    {
+        foreach ($this->getAllThemeNames() as $themeName) {
+            if ($uri = $this->getTheme($themeName)->renderIcon($iconName, $size)) {
+                return $uri;
+            }
+        }
+    }
 }

@@ -13,8 +13,21 @@ use StockIcon\Toolkit\ToolkitHelper;
 /**
  * Known stock icons consumers list.
  */
-function stockicon_admin_appearance() {
-  
+function stockicon_admin_appearance($form, &$form_state) {
+
+  $options = array();
+  foreach (stockicon_theme_factory_get()->getAllThemeNames() as $name) {
+    $options[$name] = $name;
+  }
+
+  $form['stockicon_default_theme'] = array(
+    '#type'          => 'select',
+    '#title'         => t("Default theme"),
+    '#options'       => $options,
+    '#default_value' => variable_get('stockicon_default_theme'),
+  );
+
+  return system_settings_form($form);
 }
 
 /**
@@ -115,4 +128,59 @@ function stockicon_admin_appearance_theme_preview(IconTheme $theme) {
   }
 
   return $build;
+}
+
+function stockicon_admin_appearance_theme_preview_table(IconTheme $theme) {
+  $build = array();
+
+  $prefered_size = IconInfo::ICON_SIZE_32;
+
+  foreach ($theme->getContextLists() as $context) {
+    $rows = array();
+
+    foreach ($theme->getIconList($context) as $icon_name) {
+      $row   = array();
+      $sizes = $theme->getIconSizes($icon_name);
+
+      if (in_array($prefered_size, $sizes) || in_array(IconInfo::SCALABLE, $sizes)) {
+        $size = $prefered_size;
+      } else {
+        $size = $sizes[0];
+      }
+
+      $attributes = array(
+        'class' => 'stockicon-preview',
+        'title' => sprintf('%s/%s - %s', $context, $icon_name, $size),
+      );
+
+      $row[] = check_plain($icon_name);
+
+      if ($uri = $theme->renderIcon($icon_name, $size)) {
+        list($x, $y) = ToolkitHelper::getDimensionsFromSize($size);
+        $attributes['src'] = file_create_url($uri);
+        $attributes['width'] = $x;
+        $attributes['height'] = $y;
+        $attributes['style'] = 'overflow: hidden;';
+        $row[] = '<img ' . drupal_attributes($attributes) . '/>';
+      } else {
+        $attributes['class'] = 'stockicon-broken';
+        $row[] = '<span ' . drupal_attributes($attributes) . '></span>';
+      }
+
+      $rows[] = $row;
+    }
+
+    $build[] = array(
+      'title' => array(
+        '#prefix' => '<h2>',
+        '#suffix' => '</h2>',
+        '#markup' => check_plain($context),
+      ),
+      'table' => array(
+        '#markup' => theme('table', array('rows' => $rows)),
+      ),
+    );
+  }
+
+  return $build;  
 }
